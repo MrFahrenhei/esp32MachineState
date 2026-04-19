@@ -3,7 +3,8 @@
 Kernel kernel;
 void setup() {
     Serial.begin(115200);
-    delay(1000);
+    delay(2000);
+    Serial.println("Fazendo boot");
     kernel.boot();
 }
 
