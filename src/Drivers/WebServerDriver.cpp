@@ -1,82 +1,81 @@
-//
-// Created by beraldo on 17/04/2026.
-//
-
 #include "WebServerDriver.h"
+#include "Config/WifiConfig.h"
 
 namespace Drivers {
-    WebServerDriver::WebServerDriver()
-    {
-        _server = new WebServer(80);
+    WebServerDriver::WebServerDriver() : server_(new WebServer(80)){
+          if (!LittleFS.begin()) {
+        Serial.println("Erro ao montar LittleFS");
+        return;
+    }
+  
     }
 
     void WebServerDriver::tick() {
-        _server->handleClient();
+        server_->handleClient();
     }
 
     void WebServerDriver::beginDashboard()
     {
-        delete _server;
-        _server = new WebServer(80);
+        delete server_;
+        server_ = new WebServer(80);
         this->setupDashboardRoutes();
-        _server->begin();
+        server_->begin();
     }
     void WebServerDriver::beginConfigPortal(WifiDriver& wifi)
     {
-        delete _server;
-        _server = new WebServer(80);
+        delete server_;
+        server_ = new WebServer(80);
         this->setupConfigRoutes(wifi);
-        _server->begin();
+        server_->begin();
     }
-    Config::WifiConfig WebServerDriver::consumePendingConfig()
+    auto WebServerDriver::consumePendingConfig() -> Config::WifiConfig
     {
-        this->_hasPendingConfig = false;
-        return _pendingConfig;
+        hasPendingConfig_ = 0;
+        return pendingConfig_;
     }
 
-    void WebServerDriver::setupDashboardRoutes()
-    {
-        _server->serveStatic("/", LittleFS, "/");
-        _server->onNotFound([this]()
-        {
+    void WebServerDriver::setupDashboardRoutes() {
+        server_->on("/", HTTP_GET, [this]() -> void {
             File file = LittleFS.open("/index.html", "r");
-            if (!file)
-            {
-                _server->send(404, "text/plain", "index.html nao encontrado");
+            if (!file) {
+                server_->send(404, "text/plain", "Arquivo index.html não encontrado");
                 return;
             }
-            _server->streamFile(file, "text/html");
+
+            server_->streamFile(file, "text/html");
             file.close();
         });
     }
     void WebServerDriver::setupConfigRoutes(WifiDriver& wifi)
     {
-        _server->on("/api/networks", HTTP_GET, [this]()
-        {
-            int n = WiFi.scanNetworks();
-            String json = "[";
-            for (int i = 0; i < n; ++i)
+        server_->on("/api/networks", HTTP_GET, [this]() -> void
             {
-                if (i > 0) json += ",";
+            int16_t scanned_wifi = WiFi.scanNetworks();
+            String json = "[";
+            for (uint8_t i = 0; i < scanned_wifi; ++i)
+            {
+                if (i > 0) {
+                    json += ",";
+                }
                 json += "{";
-                json += "\"ssid\":\"" + WiFi.SSID(i) + "\",";
+                json += R"("ssid":")" + WiFi.SSID(i) + "\",";
                 json += "\"rssi\":" + String(WiFi.RSSI(i));
                 json += "}";
             }
             json += "]";
-            _server->send(200, "application/json", json);
+            server_->send(200, "application/json", json);
         });
-        _server->on("/api/connect", HTTP_POST, [this, &wifi]()
-        {
-            String ssid = _server->arg("ssid");
-            String psw = _server->arg("password");
+        server_->on("/api/connect", HTTP_POST, [this]()-> void
+            {
+            String ssid = server_->arg("ssid");
+            String psw = server_->arg("password");
 
-            strncpy(_pendingConfig.ssid, ssid.c_str(), sizeof(_pendingConfig.ssid));
-            strncpy(_pendingConfig.psw, psw.c_str(), sizeof(_pendingConfig.psw));
+            strncpy(pendingConfig_.ssid, ssid.c_str(), sizeof(pendingConfig_.ssid));
+            strncpy(pendingConfig_.psw, psw.c_str(), sizeof(pendingConfig_.psw));
 
-            _hasPendingConfig = true;
+            hasPendingConfig_ = true;
 
-            _server->send(200, "application/json", "{\"status\":\"ok\"}");
+            server_->send(200, "application/json", R"({"status":"ok"})");
         });
     }
 }

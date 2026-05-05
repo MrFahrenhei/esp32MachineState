@@ -8,7 +8,7 @@ namespace Config {
         void clear() {
             ssid[0] = '\0';
             psw[0] = '\0';
-            configured = false;
+            configured = 0;
         }
     };
 }

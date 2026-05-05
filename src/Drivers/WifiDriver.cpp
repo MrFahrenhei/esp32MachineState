@@ -10,19 +10,20 @@ namespace Drivers {
         WiFi.softAP(ssid, psw);
     }
 
-    bool WifiDriver::waitForConnection(unsigned long timeoutMs) {
+    auto WifiDriver::waitForConnection(unsigned long timeoutMs) -> bool {
         const unsigned long start = millis();
-        while (WiFi.status() != WL_CONNECTED && millis() - start < timeoutMs) {
+        while (WiFiClass::status() != WL_CONNECTED && millis() - start < timeoutMs) {
             delay(300);
             Serial.print(".");
         }
             Serial.println(".");
         return WiFi.status() == WL_CONNECTED;
     }
-    IPAddress WifiDriver::localIP() const
+    auto WifiDriver::localIP() const -> IPAddress
     {
-        if (WiFi.getMode() == WIFI_AP)
+        if (WiFiClass::getMode() == WIFI_AP){
             return WiFi.softAPIP();
+        }
 
         return WiFi.localIP();
     }

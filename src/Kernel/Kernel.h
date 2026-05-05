@@ -1,6 +1,5 @@
 #pragma once
 #include <Arduino.h>
-#include "LittleFS.h"
 #include "State.h"
 #include "../Services/NetworkingService.h"
 #include "../Drivers/WifiDriver.h"
@@ -18,12 +17,12 @@ private:
     void networkConfigurationPortal();
     void enterWifi();
     void enterOperational();
-private:
-    Config::Config _config;
-    State _state = State::Booting;
 
-    Drivers::WifiDriver _wifi;
-    Drivers::WebServerDriver _webServer;
+    Config::Config config_;
+    State state_ = State::Booting;
 
-    Services::NetworkingService _networkingService;
+    Drivers::WifiDriver wifi_;
+    Drivers::WebServerDriver webServer_;
+
+    Services::NetworkingService networkingService_;
 };

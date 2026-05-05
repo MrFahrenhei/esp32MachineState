@@ -11,10 +11,10 @@ namespace Services {
             );
         void start();
     private:
-        Drivers::WifiDriver& _wifi;
-        Drivers::WebServerDriver& _webServer;
-    private:
-        static constexpr auto DEFAULT_AP_SSID = "AvetoolsSuporte";
-        static constexpr auto DEFAULT_AP_PSW = "osuporte";
+        Drivers::WifiDriver& wifi_;
+        Drivers::WebServerDriver& webServer_;
+
+        static constexpr auto default_ap_ssid = "AvetoolsSuporte";
+        static constexpr auto default_ap_psw = "osuporte";
     };
 }

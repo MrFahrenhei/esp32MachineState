@@ -1,8 +1,8 @@
 #pragma once
 #include <WebServer.h>
-#include <LittleFS.h>
+#include "Config/WifiConfig.h"
 #include "WifiDriver.h"
-#include "Config/Config.h"
+#include <LittleFS.h>
 
 namespace Drivers {
     class WebServerDriver {
@@ -11,14 +11,15 @@ namespace Drivers {
         void tick();
         void beginDashboard();
         void beginConfigPortal(WifiDriver& wifi);
-        uint8_t _hasPendingConfig = false;
-        Config::WifiConfig consumePendingConfig();
+        uint8_t hasPendingConfig_ = 0;
+        auto consumePendingConfig() -> Config::WifiConfig;
     private:
         void setupDashboardRoutes();
         void setupConfigRoutes(WifiDriver& wifi);
-    private:
-        WebServer* _server;
-        Config::WifiConfig _pendingConfig;
+
+        WebServer* server_;
+
+        Config::WifiConfig pendingConfig_;
     };
 }
 

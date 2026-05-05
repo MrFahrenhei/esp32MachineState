@@ -2,11 +2,11 @@
 
 namespace Services {
     NetworkingService::NetworkingService(Drivers::WifiDriver& wifi, Drivers::WebServerDriver& webServer):
-    _wifi(wifi), _webServer(webServer){}
+    wifi_(wifi), webServer_(webServer){}
     void NetworkingService::start() {
-        _wifi.startAccessPoint(DEFAULT_AP_SSID, DEFAULT_AP_PSW);
-        _webServer.beginConfigPortal(_wifi);
+        wifi_.startAccessPoint(default_ap_ssid, default_ap_psw);
+        webServer_.beginConfigPortal(wifi_);
         Serial.print("IP: ");
-        Serial.println(_wifi.localIP());
+        Serial.println(wifi_.localIP());
     }
 }

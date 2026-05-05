@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "Kernel/Kernel.h"
-Kernel kernel;
+Kernel kernel{};
+#include <LittleFS.h>
 void setup() {
     Serial.begin(115200);
     delay(2000);

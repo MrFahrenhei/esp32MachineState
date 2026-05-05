@@ -1,49 +1,44 @@
 #include "Kernel.h"
 
-Kernel::Kernel(): _networkingService(_wifi, _webServer) {
+Kernel::Kernel(): networkingService_(wifi_, webServer_) {
     Serial.println("Construct do kernel");
 }
 
-void Kernel::boot() {
+void Kernel::boot(){
     Serial.println("Boot do kernel");
-    if (!LittleFS.begin(true)) {
-        Serial.println("Erro ao montar LittleFS");
-        return;
-    }
-    Serial.println("LittleFS OK");
     this->loadNetworkingConfiguration();
     Serial.print("Status atual é ");
-    Serial.println(_config.wifiConfig.configured);
+    Serial.println(config_.wifiConfig.configured);
 
-    if (_config.wifiConfig.configured == false) {
+    if (config_.wifiConfig.configured == 0) {
         Serial.println("Não está configurado Wifi");
         this->networkConfigurationPortal();
     }else {
         Serial.print("Está configurado no wifi: ");
-        Serial.println(_config.wifiConfig.ssid);
+        Serial.println(config_.wifiConfig.ssid);
         this->enterWifi();
     }
 }
 
 void Kernel::tick() {
-    switch (_state) {
+    switch (state_) {
     case State::ConfigPortal:
         {
-            _webServer.tick();
+            webServer_.tick();
             Serial.println("Is configPortal");
-            if (_webServer._hasPendingConfig)
+            if (webServer_.hasPendingConfig_)
             {
-                Config::WifiConfig newConfig = _webServer.consumePendingConfig();
-                _wifi.disconnect(false);
-                _wifi.startStation(newConfig.ssid, newConfig.psw);
-                if (_wifi.waitForConnection(10000))
+                Config::WifiConfig new_config = webServer_.consumePendingConfig();
+                wifi_.disconnect(false);
+                wifi_.startStation(new_config.ssid, new_config.psw);
+                if (wifi_.waitForConnection(10000))
                 {
-                    _config.wifiConfig = newConfig;
+                    config_.wifiConfig = new_config;
                     this->enterOperational();
                 }
                 else
                 {
-                    _wifi.disconnect(true);
+                    wifi_.disconnect(true);
                     this->networkConfigurationPortal();
                 }
             }
@@ -51,22 +46,22 @@ void Kernel::tick() {
         }
         case State::ConnectingWifi: {
             Serial.println("Is connectinfWifi");
-            if (_wifi.waitForConnection(10000)) {
+            if (wifi_.waitForConnection(10000)) {
                 Serial.println("Wifi connection established");
                 enterOperational();
             }else {
                 Serial.print("Fail to connect to wifi: SSID ");
-                Serial.println(_config.wifiConfig.ssid);
-                _wifi.disconnect(true);
+                Serial.println(config_.wifiConfig.ssid);
+                wifi_.disconnect(true);
                 //TODO colocar função que apaga da memória também
-                _config.wifiConfig.clear();
+                config_.wifiConfig.clear();
                 this->networkConfigurationPortal();
             }
             break;
         }
         case State::Operational: {
             Serial.println("Is operational");
-                _webServer.tick();
+                webServer_.tick();
             break;
         }
     default: break;
@@ -74,28 +69,31 @@ void Kernel::tick() {
 }
 
 void Kernel::loadNetworkingConfiguration() {
-    Config::WifiConfig mockupConfig{};
-    mockupConfig.configured = false;
+    Config::WifiConfig mockup_config{};
+    mockup_config.configured = 0;
 #ifdef FAKER
-    mockupConfig.configured = true;
-    strcpy(mockupConfig.ssid, "CERTTO-D8FA3");
-    strcpy(mockupConfig.psw, "30092001V");
+    mockup_config.configured = 1;
+    //strcpy(mockupConfig.ssid, "CERTTO-D8FA3");
+    //strcpy(mockupConfig.psw, "30092001V");
+    strcpy(mockup_config.ssid, "Avetools-Impressora");
+    strcpy(mockup_config.psw, "824l@@DL3n*");
+
 #endif
-    this->_config.wifiConfig = mockupConfig;
+    this->config_.wifiConfig = mockup_config;
 }
 
 void Kernel::networkConfigurationPortal() {
-    _state = State::ConfigPortal;
-    _networkingService.start();
+    state_ = State::ConfigPortal;
+    networkingService_.start();
 }
 
 void Kernel::enterWifi() {
-    _state = State::ConnectingWifi;
-    _wifi.startStation(_config.wifiConfig.ssid, _config.wifiConfig.psw);
+    state_ = State::ConnectingWifi;
+    wifi_.startStation(config_.wifiConfig.ssid, config_.wifiConfig.psw);
 }
 
 void Kernel::enterOperational() {
-    _state = State::Operational;
-    _webServer.beginDashboard();
-    Serial.println(_wifi.localIP());
+    state_ = State::Operational;
+    webServer_.beginDashboard();
+    Serial.println(wifi_.localIP());
 }
