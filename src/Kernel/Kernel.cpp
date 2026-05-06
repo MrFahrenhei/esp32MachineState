@@ -1,6 +1,6 @@
 #include "Kernel.h"
 
-Kernel::Kernel(): networkingService_(wifi_, webServer_) {
+Kernel::Kernel(): memoryConfigRepository_(preferencesStorage_), networkingService_(wifi_, webServer_) {
     Serial.println("Construct do kernel");
 }
 
@@ -10,7 +10,7 @@ void Kernel::boot(){
     Serial.print("Status atual é ");
     Serial.println(config_.wifiConfig.configured);
 
-    if (config_.wifiConfig.configured == 0) {
+    if (config_.wifiConfig.configured == false) {
         Serial.println("Não está configurado Wifi");
         this->networkConfigurationPortal();
     }else {
@@ -26,14 +26,16 @@ void Kernel::tick() {
         {
             webServer_.tick();
             Serial.println("Is configPortal");
-            if (webServer_.hasPendingConfig_)
+            if (webServer_.hasPendingConfig())
             {
                 Config::WifiConfig new_config = webServer_.consumePendingConfig();
                 wifi_.disconnect(false);
                 wifi_.startStation(new_config.ssid, new_config.psw);
                 if (wifi_.waitForConnection(10000))
                 {
+                    Serial.println("New wifi connection established");
                     config_.wifiConfig = new_config;
+                    memoryConfigRepository_.saveWifiConfig(new_config);
                     this->enterOperational();
                 }
                 else
@@ -61,7 +63,19 @@ void Kernel::tick() {
         }
         case State::Operational: {
             Serial.println("Is operational");
-                webServer_.tick();
+            webServer_.tick();
+            if (webServer_.hasResetWifiRequest()) {
+                Serial.println("Reset WiFi consumido pelo Kernel");
+                webServer_.consumeResetWifiRequest();
+
+                memoryConfigRepository_.clearWifiConfig();
+                config_.wifiConfig.clear();
+
+                wifi_.disconnect(true);
+
+                this->networkConfigurationPortal();
+            }
+
             break;
         }
     default: break;
@@ -69,17 +83,7 @@ void Kernel::tick() {
 }
 
 void Kernel::loadNetworkingConfiguration() {
-    Config::WifiConfig mockup_config{};
-    mockup_config.configured = 0;
-#ifdef FAKER
-    mockup_config.configured = 1;
-    //strcpy(mockupConfig.ssid, "CERTTO-D8FA3");
-    //strcpy(mockupConfig.psw, "30092001V");
-    strcpy(mockup_config.ssid, "Avetools-Impressora");
-    strcpy(mockup_config.psw, "824l@@DL3n*");
-
-#endif
-    this->config_.wifiConfig = mockup_config;
+    config_.wifiConfig = memoryConfigRepository_.loadWifiConfig();
 }
 
 void Kernel::networkConfigurationPortal() {

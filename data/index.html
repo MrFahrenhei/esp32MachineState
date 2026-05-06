@@ -5,7 +5,44 @@
   <title>ESP32 Web Server</title>
 </head>
 <body>
-  <h1>Olá do ESP32!</h1>
-  <p>Esse HTML veio do LittleFS.</p>
+<h1>Olá do ESP32!</h1>
+<p>Esse HTML veio do LittleFS.</p>
+
+<button id="resetWifiButton">Resetar Wi-Fi</button>
+<p id="status"></p>
+
+<script>
+  const button = document.getElementById("resetWifiButton");
+  const statusEl = document.getElementById("status");
+
+  button.addEventListener("click", async () => {
+    const confirmReset = confirm("Tem certeza que deseja apagar o Wi-Fi salvo?");
+    if (!confirmReset) {
+      return;
+    }
+    button.disabled = true;
+    statusEl.textContent = "Solicitando reset do Wi-Fi...";
+
+    try {
+      const response = await fetch("/reset-wifi", {
+        method: "POST"
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro HTTP " + response.status);
+      }
+
+      statusEl.textContent = "Wi-Fi apagado. Voltando ao portal de configuração...";
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 3000);
+
+    } catch (error) {
+      statusEl.textContent = "Falha ao resetar Wi-Fi.";
+      button.disabled = false;
+    }
+  });
+</script>
 </body>
 </html>

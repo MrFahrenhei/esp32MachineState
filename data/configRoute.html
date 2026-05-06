@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Configurar Wi-Fi</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 24px;
+        }
+
+        .card {
+            max-width: 420px;
+            margin: 40px auto;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #555;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        .status {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+<div class="card">
+    <h1>Configurar Wi-Fi</h1>
+    <p>Informe a rede Wi-Fi que o dispositivo deve usar.</p>
+
+    <form id="wifiForm">
+        <label for="ssid">SSID</label>
+        <input id="ssid" name="ssid" type="text" maxlength="31" required>
+
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" maxlength="31">
+
+        <button id="submitButton" type="submit">Salvar e conectar</button>
+
+        <div id="status" class="status"></div>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById("wifiForm");
+    const statusEl = document.getElementById("status");
+    const button = document.getElementById("submitButton");
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        button.disabled = true;
+        statusEl.textContent = "Enviando configuração...";
+
+        const formData = new FormData(form);
+
+        try {
+            await fetch("/", {
+                method: "POST",
+                body: new URLSearchParams(formData)
+            });
+
+            statusEl.textContent = "Configuração enviada. Tentando conectar...";
+        } catch (error) {
+            statusEl.textContent = "Configuração enviada. O dispositivo pode ter mudado de rede.";
+        }
+
+        setTimeout(() => {
+            window.location.href = "/";
+        }, 5000);
+    });
+</script>
+</body>
+</html>

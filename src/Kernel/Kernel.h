@@ -1,11 +1,12 @@
 #pragma once
 #include <Arduino.h>
 #include "State.h"
-#include "../Services/NetworkingService.h"
-#include "../Drivers/WifiDriver.h"
-
 #include "Config/Config.h"
+#include "Drivers/WifiDriver.h"
 #include "Drivers/WebServerDriver.h"
+#include "Drivers/PreferencesStorage.h"
+#include "Services/NetworkingService.h"
+#include "Services/MemoryConfigRepository.h"
 
 class Kernel {
 public:
@@ -23,6 +24,8 @@ private:
 
     Drivers::WifiDriver wifi_;
     Drivers::WebServerDriver webServer_;
+    Drivers::PreferencesStorage preferencesStorage_;
 
+    Services::MemoryConfigRepository memoryConfigRepository_;
     Services::NetworkingService networkingService_;
 };

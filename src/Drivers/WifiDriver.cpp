@@ -14,10 +14,10 @@ namespace Drivers {
         const unsigned long start = millis();
         while (WiFiClass::status() != WL_CONNECTED && millis() - start < timeoutMs) {
             delay(300);
-            Serial.print(".");
+            Serial.print("@");
         }
-            Serial.println(".");
-        return WiFi.status() == WL_CONNECTED;
+            Serial.println("@");
+        return WiFiClass::status() == WL_CONNECTED;
     }
     auto WifiDriver::localIP() const -> IPAddress
     {
